@@ -1,0 +1,104 @@
+{
+  "display_information": {
+    "name": "BlackRoad OS",
+    "description": "Fleet communication hub for BlackRoad infrastructure",
+    "background_color": "#1a1a1a",
+    "long_description": "BlackRoad OS connects all Pi fleet nodes, Cloudflare workers, GitHub repos, Stripe payments, and AI agents into one Slack workspace. Every layer of the infrastructure can talk, listen, and react."
+  },
+  "features": {
+    "app_home": {
+      "home_tab_enabled": true,
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": false
+    },
+    "bot_user": {
+      "display_name": "BlackRoad",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/fleet",
+        "url": "https://blackroad-slack.amundsonalexa.workers.dev/slack/commands",
+        "description": "Fleet status — all Pis, temps, disk, RAM",
+        "usage_hint": "[node-name]",
+        "should_escape": false
+      },
+      {
+        "command": "/say",
+        "url": "https://blackroad-slack.amundsonalexa.workers.dev/slack/commands",
+        "description": "Send a message to a specific Pi",
+        "usage_hint": "<node> <message>",
+        "should_escape": false
+      },
+      {
+        "command": "/heal",
+        "url": "https://blackroad-slack.amundsonalexa.workers.dev/slack/commands",
+        "description": "Trigger self-heal on a node",
+        "usage_hint": "<node>",
+        "should_escape": false
+      },
+      {
+        "command": "/mission",
+        "url": "https://blackroad-slack.amundsonalexa.workers.dev/slack/commands",
+        "description": "Read the mission",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "redirect_urls": [
+      "https://blackroad-slack.amundsonalexa.workers.dev/oauth/callback"
+    ],
+    "scopes": {
+      "bot": [
+        "channels:history",
+        "channels:join",
+        "channels:manage",
+        "channels:read",
+        "chat:write",
+        "chat:write.customize",
+        "commands",
+        "emoji:read",
+        "files:read",
+        "files:write",
+        "groups:history",
+        "groups:read",
+        "groups:write",
+        "im:history",
+        "im:read",
+        "im:write",
+        "mpim:history",
+        "mpim:read",
+        "mpim:write",
+        "pins:read",
+        "pins:write",
+        "reactions:read",
+        "reactions:write",
+        "team:read",
+        "users:read",
+        "incoming-webhook"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": "https://blackroad-slack.amundsonalexa.workers.dev/slack/events",
+      "bot_events": [
+        "app_home_opened",
+        "app_mention",
+        "message.channels",
+        "message.groups",
+        "message.im",
+        "message.mpim",
+        "reaction_added"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": "https://blackroad-slack.amundsonalexa.workers.dev/slack/interactive"
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}

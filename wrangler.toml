@@ -1,0 +1,11 @@
+name = "blackroad-slack"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+account_id = "848cf0b18d51e0170e0d1537aec3505a"
+
+[vars]
+FLEET_NODES = '{"alice":"pi@192.168.4.49","cecilia":"blackroad@192.168.4.96","octavia":"pi@192.168.4.101","aria":"blackroad@192.168.4.98","lucidia":"octavia@192.168.4.38"}'
+
+[[kv_namespaces]]
+binding = "SLACK_KV"
+id = "1861124753e742709fbc393fffa6c9ba"
