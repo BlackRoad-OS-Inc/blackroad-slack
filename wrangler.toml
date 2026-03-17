@@ -9,3 +9,21 @@ FLEET_NODES = '{"alice":"pi@192.168.4.49","cecilia":"blackroad@192.168.4.96","oc
 [[kv_namespaces]]
 binding = "SLACK_KV"
 id = "1861124753e742709fbc393fffa6c9ba"
+
+[[d1_databases]]
+binding = "MEMORY_DB"
+database_name = "blackroad-slack-memory"
+database_id = "bf4aa1c2-689f-4364-8cd2-7e95bb5ac819"
+
+[[services]]
+binding = "AI_GATEWAY"
+service = "blackroad-ai-gateway"
+
+# Autonomous cron triggers
+[triggers]
+crons = [
+  "0 * * * *",      # Hourly: agent chatter
+  "0 */6 * * *",    # Every 6h: fleet health digest
+  "0 13 * * *",     # Daily 8AM CDT: full report
+  "*/5 * * * *",    # Every 5min: proactive monitoring
+]
