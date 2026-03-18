@@ -5,6 +5,7 @@
 
 // Gematria DO droplet — non-CF, bypasses same-zone loop
 const OLLAMA_PROXY = 'https://ollama-fallback.blackroad.io';
+const LOCAL_OLLAMA = 'http://127.0.0.1:11434';
 const AI_API = OLLAMA_PROXY + '/api/chat'; // Ollama native chat endpoint
 
 // Agent personas — each has a unique personality and specialty
@@ -228,18 +229,34 @@ async function askAgent(agentId, message, context = [], env = null) {
     { role: 'user', content: message },
   ];
 
-  try {
-    // Call Gematria Ollama directly (non-CF, no loop issues)
-    const res = await fetch(OLLAMA_PROXY + '/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: agent.model, messages, stream: false, options: { num_predict: 80, temperature: 0.7 } }),
-    });
-    const data = await res.json();
-    return data.message?.content || '...';
-  } catch (e) {
-    return `(${agent.name} offline: ${e.message.slice(0, 60)})`;
+  const baseCandidates = [
+    env?.OLLAMA_URL,
+    env?.OLLAMA_PROXY_URL,
+    LOCAL_OLLAMA,
+    OLLAMA_PROXY,
+  ].filter(Boolean);
+  const model = env?.OLLAMA_MODEL || agent.model || 'llama3.2:3b';
+
+  for (const base of [...new Set(baseCandidates)]) {
+    try {
+      const res = await fetch(base.replace(/\/$/, '') + '/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          messages,
+          stream: false,
+          options: { num_predict: 120, temperature: 0.7 },
+        }),
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const content = data.message?.content?.trim();
+      if (content) return content;
+    } catch (_) {}
   }
+
+  return `(${agent.name} offline: Ollama unreachable)`;
 }
 
 // ── Slack Events API Handler ──
@@ -1056,16 +1073,35 @@ async function postToSlack(env, text, opts = {}) {
     return json({ ok: data.ok, ts: data.ts, channel: data.channel });
   }
 
-  return postViaWebhook(env, text);
+  return postViaWebhook(env, text, opts);
 }
 
-async function postViaWebhook(env, text) {
+// Webhook mode — one channel, visual tags for message types
+// Agent identity via emoji prefix, channel type via tag
+const TYPE_TAGS = {
+  fleet: '🖥️ FLEET', alerts: '🚨 ALERT', deploys: '🚀 DEPLOY',
+  memory: '🧠 MEMORY', github: '📦 GITHUB', revenue: '💰 REVENUE',
+  security: '🔒 SECURITY', collab: '🤝 COLLAB', agents: '🤖 AGENTS',
+};
+
+async function postViaWebhook(env, text, opts = {}) {
   const webhookUrl = await env.SLACK_KV.get('webhook_url');
   if (!webhookUrl) return json({ error: 'no webhook configured' }, {}, 500);
+
+  // Add visual tag + agent identity
+  let formatted = text;
+  if (opts.type && TYPE_TAGS[opts.type] && !text.includes(TYPE_TAGS[opts.type])) {
+    formatted = `\`${TYPE_TAGS[opts.type]}\` ${text}`;
+  }
+  if (opts.agent && AGENTS[opts.agent] && !text.includes(AGENTS[opts.agent].name)) {
+    const a = AGENTS[opts.agent];
+    formatted = `${a.emoji} *${a.name}:* ${formatted}`;
+  }
+
   const resp = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text })
+    body: JSON.stringify({ text: formatted })
   });
   return resp.ok ? json({ ok: true }) : json({ error: 'slack post failed' }, {}, 500);
 }
